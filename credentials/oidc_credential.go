@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"time"
 
@@ -102,29 +103,20 @@ func (r *OIDCCredential) GetType() *string {
 }
 
 func (r *OIDCCredential) GetOIDCToken(OIDCTokenFilePath string) *string {
-	b := make([]byte, 1024)
 	_, err := os.Stat(OIDCTokenFilePath)
 	if os.IsNotExist(err) {
-		token := os.Getenv("ALIBABA_CLOUD_OIDC_TOKEN_FILE")
-		if token == "" {
+		OIDCTokenFilePath = os.Getenv("ALIBABA_CLOUD_OIDC_TOKEN_FILE")
+		if OIDCTokenFilePath == "" {
+			log.Print("can't get oidc token due to oidc file path is empty")
 			return nil
 		}
-		byt, err := ioutil.ReadFile(token)
-		if err != nil {
-			return nil
-		}
-		return tea.String(string(byt))
 	}
-	file, err := os.Open(OIDCTokenFilePath)
+	byt, err := ioutil.ReadFile(OIDCTokenFilePath)
 	if err != nil {
+		log.Printf("read odic token from file %q failed: %+v", OIDCTokenFilePath, err)
 		return nil
 	}
-	_, err = file.Read(b)
-	if err != nil {
-		return nil
-	}
-
-	return tea.String(string(b))
+	return tea.String(string(byt))
 }
 
 func (r *OIDCCredential) updateCredential() (err error) {
